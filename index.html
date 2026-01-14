@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Glassmorphism Scientific Calculator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+/* ---------- CSS RESET ---------- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  overflow: hidden;
+  position: relative;
+}
+/* subtle noise texture */
+body::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+/* ---------- LAYOUT ---------- */
+.calc-wrapper {
+  width: 100%;
+  max-width: 380px;
+  padding: 1rem;
+}
+.calc {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-radius: 24px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.25), inset 0 0 0 1px rgba(255,255,255,0.1);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* ---------- DISPLAY ---------- */
+.display {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(25px);
+  border-radius: 16px;
+  padding: 1rem 1.25rem;
+  text-align: right;
+  font-size: 2.2rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  min-height: 4rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08), 0 4px 20px rgba(0,0,0,0.15);
+  position: relative;
+  overflow: hidden;
+  word-break: break-all;
+}
+.display.error {
+  color: #ff4d4d;
+  text-shadow: 0 0 12px rgba(255, 77, 77, 0.6);
+}
+
+/* ---------- BUTTON GRID ---------- */
+.keys {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.75rem;
+}
+.btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 14px;
+  color: #fff;
+  font-size: 1.2rem;
+  font-weight: 500;
+  padding: 1rem 0;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08), 0 4px 12px rgba(0,0,0,0.15);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn:active {
+  transform: scale(0.96);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05), 0 2px 6px rgba(0,0,0,0.2);
+}
+.btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12), 0 6px 18px rgba(0,0,0,0.25);
+}
+.btn.op {
+  background: rgba(101, 93, 249, 0.25);
+}
+.btn.op:hover {
+  background: rgba(101, 93, 249, 0.35);
+}
+.btn.eq {
+  background: rgba(0, 224, 158, 0.3);
+  grid-column: span 2;
+}
+.btn.eq:hover {
+  background: rgba(0, 224, 158, 0.4);
+}
+.btn.clear {
+  background: rgba(255, 95, 109, 0.25);
+}
+.btn.clear:hover {
+  background: rgba(255, 95, 109, 0.35);
+}
+
+/* ---------- RESPONSIVE ---------- */
+@media (max-width: 400px) {
+  .btn { font-size: 1rem; padding: 0.85rem 0; }
+  .display { font-size: 1.8rem; }
+  
+}
+/*--------------Footer--------------*/
+.footer{ margin-top: 525px;
+        position:absolute ;
+  }
+</style>
+</head>
+<body>
+<div class="calc-wrapper">
+  <div class="calc" role="application" aria-label="Scientific calculator">
+    <div id="display" class="display" role="status" aria-live="polite" aria-atomic="true">0</div>
+
+    <div class="keys">
+      <!-- 1st row -->
+      <button class="btn clear" data-action="clear">C</button>
+      <button class="btn" data-action="toggle-sign">+/-</button>
+      <button class="btn" data-action="percent">%</button>
+      <button class="btn op" data-op="/">÷</button>
+      <button class="btn op" data-fn="sqrt">√</button>
+
+      <!-- 2nd row -->
+      <button class="btn" data-num="7">7</button>
+      <button class="btn" data-num="8">8</button>
+      <button class="btn" data-num="9">9</button>
+      <button class="btn op" data-op="*">×</button>
+      <button class="btn op" data-fn="square">x²</button>
+
+      <!-- 3rd row -->
+      <button class="btn" data-num="4">4</button>
+      <button class="btn" data-num="5">5</button>
+      <button class="btn" data-num="6">6</button>
+      <button class="btn op" data-op="-">−</button>
+      <button class="btn op" data-fn="1/x">1/x</button>
+
+      <!-- 4th row -->
+      <button class="btn" data-num="1">1</button>
+      <button class="btn" data-num="2">2</button>
+      <button class="btn" data-num="3">3</button>
+      <button class="btn op" data-op="+">+</button>
+      <button class="btn op" data-fn="factorial">x!</button>
+
+      <!-- 5th row -->
+      <button class="btn" data-num="0">0</button>
+      <button class="btn" data-action="decimal">.</button>
+      <button class="btn op" data-fn="power">xʸ</button>
+      <button class="btn eq" data-action="evaluate">=</button>
+    </div>
+  </div>
+</div>
+<p class="footer"><small>Created by </small><i>DINUWA</i></p>
+
+<script>
+/* ---------- STATE ---------- */
+let current = "0";           // displayed value
+let operand = null;          // stored value
+operator = null;             // pending operation
+shouldResetDisplay = false;  // replace display on next digit
+
+const display = document.getElementById("display");
+
+/* ---------- HELPERS ---------- */
+function setDisplay(str) {
+  current = str;
+  display.textContent = str;
+  display.classList.toggle("error", false);
+}
+function error(msg) {
+  display.textContent = msg;
+  display.classList.toggle("error", true);
+  shouldResetDisplay = true;
+}
+
+/* ---------- MATH ---------- */
+const ops = {
+  "+": (a,b)=>a+b,
+  "-": (a,b)=>a-b,
+  "*": (a,b)=>a*b,
+  "/": (a,b)=>b===0?NaN:a/b,
+  "pow": (a,b)=>Math.pow(a,b)
+};
+const fns = {
+  sqrt: v=>Math.sqrt(v),
+  square: v=>v*v,
+  "1/x": v=>1/v,
+  factorial: v=>{
+    if(!Number.isInteger(v)||v<0) return NaN;
+    let f=1; for(let i=2;i<=v;i++)f*=i; return f;
+  }
+};
+
+/* ---------- HANDLERS ---------- */
+function handleNumber(n) {
+  if(shouldResetDisplay){setDisplay(""); shouldResetDisplay=false;}
+  if(display.textContent==='0' && n!=='0') setDisplay(n);
+  else if(display.textContent.length<14) setDisplay(display.textContent+n);
+}
+function handleDecimal() {
+  if(shouldResetDisplay){setDisplay("0"); shouldResetDisplay=false;}
+  if(!display.textContent.includes(".")) setDisplay(display.textContent+".");
+}
+function handleOperator(op) {
+  if(operator && !shouldResetDisplay) handleEvaluate();
+  operand = parseFloat(display.textContent);
+  operator = op;
+  shouldResetDisplay = true;
+}
+function handleEvaluate() {
+  if(operator===null||operand===null) return;
+  const b = parseFloat(display.textContent);
+  const res = ops[operator](operand, b);
+  if(!isFinite(res)) error("Error");
+  else setDisplay(String(Number(res.toPrecision(15))));
+  operator = operand = null;
+  shouldResetDisplay = true;
+}
+function handleFunction(fn) {
+  const v = parseFloat(display.textContent);
+  const res = fns[fn](v);
+  if(!isFinite(res)) error("Error");
+  else setDisplay(String(Number(res.toPrecision(15))));
+  shouldResetDisplay = true;
+}
+function handleClear(){setDisplay("0"); operand=operator=null; shouldResetDisplay=false;}
+function handleToggleSign(){
+  setDisplay(String(parseFloat(display.textContent)*-1));
+}
+function handlePercent(){
+  setDisplay(String(parseFloat(display.textContent)/100));
+}
+
+/* ---------- EVENTS ---------- */
+document.querySelectorAll(".btn").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    if(btn.dataset.num!==undefined) handleNumber(btn.dataset.num);
+    if(btn.dataset.op!==undefined) handleOperator(btn.dataset.op);
+    if(btn.dataset.fn!==undefined) handleFunction(btn.dataset.fn);
+    if(btn.dataset.action==='clear') handleClear();
+    if(btn.dataset.action==='decimal') handleDecimal();
+    if(btn.dataset.action==='evaluate') handleEvaluate();
+    if(btn.dataset.action==='toggle-sign') handleToggleSign();
+    if(btn.dataset.action==='percent') handlePercent();
+  });
+});
+
+/* ---------- KEYBOARD ---------- */
+window.addEventListener("keydown", e=>{
+  if(e.key>='0'&&e.key<='9') handleNumber(e.key);
+  if(e.key==='.') handleDecimal();
+  if(e.key==='+') handleOperator('+');
+  if(e.key==='-') handleOperator('-');
+  if(e.key==='*') handleOperator('*');
+  if(e.key==='/') handleOperator('/');
+  if(e.key==='Enter') handleEvaluate();
+  if(e.key==='Escape') handleClear();
+});
+</script>
+</body>
+</html>
