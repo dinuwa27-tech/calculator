@@ -1,283 +1,1922 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Glassmorphism Scientific Calculator</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<style>
-/* ---------- CSS RESET ---------- */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  overflow: hidden;
-  position: relative;
-}
-/* subtle noise texture */
-body::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-  pointer-events: none;
-}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Free all-in-one calculator - financial, scientific, health, unit conversion and more">
+    <title>CalcHub - All-in-One Calculator Suite</title>
+    <style>
+        /* ===== CSS VARIABLES & THEME SYSTEM ===== */
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --bg-tertiary: #e9ecef;
+            --text-primary: #212529;
+            --text-secondary: #6c757d;
+            --accent: #0066cc;
+            --accent-hover: #0052a3;
+            --border: #dee2e6;
+            --success: #28a745;
+            --error: #dc3545;
+            --warning: #ffc107;
+            --shadow: rgba(0,0,0,0.1);
+            --radius: 8px;
+            --transition: 0.2s ease;
+        }
 
-/* ---------- LAYOUT ---------- */
-.calc-wrapper {
-  width: 100%;
-  max-width: 380px;
-  padding: 1rem;
-}
-.calc {
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-radius: 24px;
-  box-shadow: 0 12px 40px rgba(0,0,0,0.25), inset 0 0 0 1px rgba(255,255,255,0.1);
-  padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
+        [data-theme="dark"] {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --bg-tertiary: #404040;
+            --text-primary: #f8f9fa;
+            --text-secondary: #adb5bd;
+            --border: #404040;
+            --shadow: rgba(0,0,0,0.3);
+        }
 
-/* ---------- DISPLAY ---------- */
-.display {
-  background: rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(25px);
-  border-radius: 16px;
-  padding: 1rem 1.25rem;
-  text-align: right;
-  font-size: 2.2rem;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  min-height: 4rem;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08), 0 4px 20px rgba(0,0,0,0.15);
-  position: relative;
-  overflow: hidden;
-  word-break: break-all;
-}
-.display.error {
-  color: #ff4d4d;
-  text-shadow: 0 0 12px rgba(255, 77, 77, 0.6);
-}
+        /* ===== RESET & BASE STYLES ===== */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-/* ---------- BUTTON GRID ---------- */
-.keys {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 0.75rem;
-}
-.btn {
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
-  border-radius: 14px;
-  color: #fff;
-  font-size: 1.2rem;
-  font-weight: 500;
-  padding: 1rem 0;
-  cursor: pointer;
-  position: relative;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08), 0 4px 12px rgba(0,0,0,0.15);
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
-}
-.btn:active {
-  transform: scale(0.96);
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05), 0 2px 6px rgba(0,0,0,0.2);
-}
-.btn:hover {
-  background: rgba(255, 255, 255, 0.15);
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12), 0 6px 18px rgba(0,0,0,0.25);
-}
-.btn.op {
-  background: rgba(101, 93, 249, 0.25);
-}
-.btn.op:hover {
-  background: rgba(101, 93, 249, 0.35);
-}
-.btn.eq {
-  background: rgba(0, 224, 158, 0.3);
-  grid-column: span 2;
-}
-.btn.eq:hover {
-  background: rgba(0, 224, 158, 0.4);
-}
-.btn.clear {
-  background: rgba(255, 95, 109, 0.25);
-}
-.btn.clear:hover {
-  background: rgba(255, 95, 109, 0.35);
-}
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: background var(--transition), color var(--transition);
+        }
 
-/* ---------- RESPONSIVE ---------- */
-@media (max-width: 400px) {
-  .btn { font-size: 1rem; padding: 0.85rem 0; }
-  .display { font-size: 1.8rem; }
-  
-}
-/*--------------Footer--------------*/
-.footer{ margin-top: 525px;
-        position:absolute ;
-  }
-</style>
+        /* ===== LAYOUT ===== */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* ===== HEADER ===== */
+        header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 20px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .theme-toggle {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text-primary);
+            transition: all var(--transition);
+        }
+
+        .theme-toggle:hover {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        /* ===== NAVIGATION ===== */
+        .category-nav {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            overflow-x: auto;
+            padding: 10px 0;
+        }
+
+        .category-btn {
+            padding: 10px 20px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all var(--transition);
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .category-btn:hover, .category-btn.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        /* ===== CALCULATOR GRID ===== */
+        .calc-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .calc-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+
+        .calc-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--shadow);
+            border-color: var(--accent);
+        }
+
+        .calc-card h3 {
+            color: var(--accent);
+            margin-bottom: 8px;
+            font-size: 18px;
+        }
+
+        .calc-card p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        /* ===== MODAL ===== */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: var(--bg-primary);
+            border-radius: var(--radius);
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 8px 32px var(--shadow);
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            background: var(--bg-primary);
+            z-index: 1;
+        }
+
+        .modal-header h2 {
+            color: var(--accent);
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+        }
+
+        .close-btn:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        /* ===== FORM ELEMENTS ===== */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: all var(--transition);
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(0,102,204,0.1);
+        }
+
+        button.primary {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all var(--transition);
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        button.primary:hover {
+            background: var(--accent-hover);
+        }
+
+        button.secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            padding: 10px 20px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 14px;
+            transition: all var(--transition);
+        }
+
+        button.secondary:hover {
+            background: var(--bg-secondary);
+        }
+
+        /* ===== RESULT DISPLAY ===== */
+        .result {
+            background: var(--bg-tertiary);
+            padding: 16px;
+            border-radius: var(--radius);
+            margin-top: 16px;
+            border-left: 4px solid var(--accent);
+        }
+
+        .result h4 {
+            color: var(--accent);
+            margin-bottom: 8px;
+        }
+
+        .result-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .error {
+            background: rgba(220,53,69,0.1);
+            border-left-color: var(--error);
+            color: var(--error);
+        }
+
+        /* ===== CALCULATOR DISPLAYS ===== */
+        .calc-display {
+            background: var(--bg-tertiary);
+            padding: 20px;
+            border-radius: var(--radius);
+            text-align: right;
+            font-size: 32px;
+            font-weight: 300;
+            min-height: 80px;
+            margin-bottom: 16px;
+            word-break: break-all;
+            border: 2px solid var(--border);
+        }
+
+        .calc-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .calc-btn {
+            padding: 20px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: 500;
+            transition: all var(--transition);
+            color: var(--text-primary);
+        }
+
+        .calc-btn:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .calc-btn.operator {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        .calc-btn.operator:hover {
+            background: var(--accent-hover);
+        }
+
+        .calc-btn.wide {
+            grid-column: span 2;
+        }
+
+        /* ===== HISTORY ===== */
+        .history-panel {
+            background: var(--bg-secondary);
+            border-radius: var(--radius);
+            padding: 16px;
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            padding: 8px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .calc-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                max-width: 100%;
+            }
+
+            .calc-display {
+                font-size: 24px;
+            }
+
+            .calc-btn {
+                padding: 16px;
+                font-size: 16px;
+            }
+        }
+
+        /* ===== ACCESSIBILITY ===== */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0,0,0,0);
+            border: 0;
+        }
+
+        /* ===== UTILITY CLASSES ===== */
+        .flex-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .flex-row > * {
+            flex: 1;
+        }
+
+        .mt-2 { margin-top: 16px; }
+        .mb-2 { margin-bottom: 16px; }
+        
+        .text-center { text-align: center; }
+        .text-small { font-size: 12px; color: var(--text-secondary); }
+
+        /* ===== MATRIX DISPLAY ===== */
+        .matrix-input {
+            display: grid;
+            gap: 8px;
+            margin: 10px 0;
+        }
+
+        .matrix-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .matrix-cell {
+            width: 60px;
+            padding: 8px;
+        }
+
+        /* ===== SCIENTIFIC CALCULATOR EXTENDED GRID ===== */
+        .sci-calc-buttons {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+        }
+
+        .sci-calc-btn {
+            padding: 12px 8px;
+            font-size: 14px;
+        }
+    </style>
 </head>
 <body>
-<div class="calc-wrapper">
-  <div class="calc" role="application" aria-label="Scientific calculator">
-    <div id="display" class="display" role="status" aria-live="polite" aria-atomic="true">0</div>
+    <header role="banner">
+        <div class="header-content">
+            <h1 class="logo">🧮 CalcHub</h1>
+            <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+                <span id="themeIcon">🌙 Dark Mode</span>
+            </button>
+        </div>
+    </header>
 
-    <div class="keys">
-      <!-- 1st row -->
-      <button class="btn clear" data-action="clear">C</button>
-      <button class="btn" data-action="toggle-sign">+/-</button>
-      <button class="btn" data-action="percent">%</button>
-      <button class="btn op" data-op="/">÷</button>
-      <button class="btn op" data-fn="sqrt">√</button>
+    <main class="container" role="main">
+        <nav class="category-nav" role="navigation" aria-label="Calculator categories">
+            <button class="category-btn active" data-category="all">All</button>
+            <button class="category-btn" data-category="basic">Basic</button>
+            <button class="category-btn" data-category="advanced">Advanced</button>
+            <button class="category-btn" data-category="financial">Financial</button>
+            <button class="category-btn" data-category="health">Health</button>
+            <button class="category-btn" data-category="datetime">Date & Time</button>
+        </nav>
 
-      <!-- 2nd row -->
-      <button class="btn" data-num="7">7</button>
-      <button class="btn" data-num="8">8</button>
-      <button class="btn" data-num="9">9</button>
-      <button class="btn op" data-op="*">×</button>
-      <button class="btn op" data-fn="square">x²</button>
+        <div class="calc-grid" id="calcGrid" role="list"></div>
+    </main>
 
-      <!-- 3rd row -->
-      <button class="btn" data-num="4">4</button>
-      <button class="btn" data-num="5">5</button>
-      <button class="btn" data-num="6">6</button>
-      <button class="btn op" data-op="-">−</button>
-      <button class="btn op" data-fn="1/x">1/x</button>
-
-      <!-- 4th row -->
-      <button class="btn" data-num="1">1</button>
-      <button class="btn" data-num="2">2</button>
-      <button class="btn" data-num="3">3</button>
-      <button class="btn op" data-op="+">+</button>
-      <button class="btn op" data-fn="factorial">x!</button>
-
-      <!-- 5th row -->
-      <button class="btn" data-num="0">0</button>
-      <button class="btn" data-action="decimal">.</button>
-      <button class="btn op" data-fn="power">xʸ</button>
-      <button class="btn eq" data-action="evaluate">=</button>
+    <!-- Modal Container -->
+    <div class="modal" id="calcModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Calculator</h2>
+                <button class="close-btn" id="closeModal" aria-label="Close calculator">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+        </div>
     </div>
-  </div>
-</div>
-<p class="footer"><small>Created by </small><i>DINUWA</i></p>
 
-<script>
-/* ---------- STATE ---------- */
-let current = "0";           // displayed value
-let operand = null;          // stored value
-operator = null;             // pending operation
-shouldResetDisplay = false;  // replace display on next digit
+    <script>
+        // ===== CALCULATOR CONFIGURATION =====
+        // Centralized config for easy expansion
+        const CALCULATORS = [
+            {
+                id: 'basic',
+                name: 'Basic Calculator',
+                description: 'Standard arithmetic operations',
+                category: 'basic',
+                icon: '🔢'
+            },
+            {
+                id: 'percentage',
+                name: 'Percentage Calculator',
+                description: 'Calculate percentages, increase, decrease',
+                category: 'basic',
+                icon: '%'
+            },
+            {
+                id: 'unit',
+                name: 'Unit Converter',
+                description: 'Length, weight, temperature, volume, speed',
+                category: 'basic',
+                icon: '📏'
+            },
+            {
+                id: 'scientific',
+                name: 'Scientific Calculator',
+                description: 'Trigonometry, logarithms, exponents',
+                category: 'advanced',
+                icon: '🔬'
+            },
+            {
+                id: 'algebra',
+                name: 'Algebra Solver',
+                description: 'Solve linear and quadratic equations',
+                category: 'advanced',
+                icon: 'x²'
+            },
+            {
+                id: 'matrix',
+                name: 'Matrix Calculator',
+                description: 'Add, subtract, multiply matrices',
+                category: 'advanced',
+                icon: '⬚'
+            },
+            {
+                id: 'loan',
+                name: 'Loan/EMI Calculator',
+                description: 'Calculate monthly payments and interest',
+                category: 'financial',
+                icon: '💰'
+            },
+            {
+                id: 'interest',
+                name: 'Interest Calculator',
+                description: 'Simple and compound interest',
+                category: 'financial',
+                icon: '📈'
+            },
+            {
+                id: 'investment',
+                name: 'Investment Calculator',
+                description: 'SIP, lump sum returns',
+                category: 'financial',
+                icon: '💹'
+            },
+            {
+                id: 'bmi',
+                name: 'BMI Calculator',
+                description: 'Body Mass Index calculator',
+                category: 'health',
+                icon: '⚖️'
+            },
+            {
+                id: 'bmr',
+                name: 'BMR/Calorie Calculator',
+                description: 'Basal Metabolic Rate and daily calories',
+                category: 'health',
+                icon: '🔥'
+            },
+            {
+                id: 'age',
+                name: 'Age Calculator',
+                description: 'Calculate exact age from birthdate',
+                category: 'health',
+                icon: '🎂'
+            },
+            {
+                id: 'pregnancy',
+                name: 'Pregnancy Calculator',
+                description: 'Due date and week calculator',
+                category: 'health',
+                icon: '🤰'
+            },
+            {
+                id: 'datediff',
+                name: 'Date Difference',
+                description: 'Calculate days between dates',
+                category: 'datetime',
+                icon: '📅'
+            },
+            {
+                id: 'timeduration',
+                name: 'Time Duration',
+                description: 'Calculate time between two times',
+                category: 'datetime',
+                icon: '⏱️'
+            },
+            {
+                id: 'countdown',
+                name: 'Countdown Timer',
+                description: 'Count down to a specific date',
+                category: 'datetime',
+                icon: '⏳'
+            }
+        ];
 
-const display = document.getElementById("display");
+        // ===== STATE MANAGEMENT =====
+        const AppState = {
+            theme: localStorage.getItem('theme') || 'light',
+            currentCalculator: null,
+            history: JSON.parse(localStorage.getItem('calcHistory') || '[]'),
+            
+            saveHistory(entry) {
+                this.history.unshift(entry);
+                if (this.history.length > 50) this.history = this.history.slice(0, 50);
+                localStorage.setItem('calcHistory', JSON.stringify(this.history));
+            },
+            
+            clearHistory() {
+                this.history = [];
+                localStorage.setItem('calcHistory', '[]');
+            }
+        };
 
-/* ---------- HELPERS ---------- */
-function setDisplay(str) {
-  current = str;
-  display.textContent = str;
-  display.classList.toggle("error", false);
-}
-function error(msg) {
-  display.textContent = msg;
-  display.classList.toggle("error", true);
-  shouldResetDisplay = true;
-}
+        // ===== CORE ENGINE =====
+        class CalculatorEngine {
+            static evaluate(expression) {
+                try {
+                    // Safe evaluation - remove any dangerous characters
+                    const safe = expression.replace(/[^0-9+\-*/.()]/g, '');
+                    return Function('"use strict"; return (' + safe + ')')();
+                } catch {
+                    throw new Error('Invalid expression');
+                }
+            }
 
-/* ---------- MATH ---------- */
-const ops = {
-  "+": (a,b)=>a+b,
-  "-": (a,b)=>a-b,
-  "*": (a,b)=>a*b,
-  "/": (a,b)=>b===0?NaN:a/b,
-  "pow": (a,b)=>Math.pow(a,b)
-};
-const fns = {
-  sqrt: v=>Math.sqrt(v),
-  square: v=>v*v,
-  "1/x": v=>1/v,
-  factorial: v=>{
-    if(!Number.isInteger(v)||v<0) return NaN;
-    let f=1; for(let i=2;i<=v;i++)f*=i; return f;
-  }
-};
+            static percentage(value, percent, operation = 'of') {
+                const v = parseFloat(value);
+                const p = parseFloat(percent);
+                
+                switch(operation) {
+                    case 'of': return (v * p) / 100;
+                    case 'increase': return v + (v * p / 100);
+                    case 'decrease': return v - (v * p / 100);
+                    case 'change': return ((p - v) / v) * 100;
+                    default: return 0;
+                }
+            }
 
-/* ---------- HANDLERS ---------- */
-function handleNumber(n) {
-  if(shouldResetDisplay){setDisplay(""); shouldResetDisplay=false;}
-  if(display.textContent==='0' && n!=='0') setDisplay(n);
-  else if(display.textContent.length<14) setDisplay(display.textContent+n);
-}
-function handleDecimal() {
-  if(shouldResetDisplay){setDisplay("0"); shouldResetDisplay=false;}
-  if(!display.textContent.includes(".")) setDisplay(display.textContent+".");
-}
-function handleOperator(op) {
-  if(operator && !shouldResetDisplay) handleEvaluate();
-  operand = parseFloat(display.textContent);
-  operator = op;
-  shouldResetDisplay = true;
-}
-function handleEvaluate() {
-  if(operator===null||operand===null) return;
-  const b = parseFloat(display.textContent);
-  const res = ops[operator](operand, b);
-  if(!isFinite(res)) error("Error");
-  else setDisplay(String(Number(res.toPrecision(15))));
-  operator = operand = null;
-  shouldResetDisplay = true;
-}
-function handleFunction(fn) {
-  const v = parseFloat(display.textContent);
-  const res = fns[fn](v);
-  if(!isFinite(res)) error("Error");
-  else setDisplay(String(Number(res.toPrecision(15))));
-  shouldResetDisplay = true;
-}
-function handleClear(){setDisplay("0"); operand=operator=null; shouldResetDisplay=false;}
-function handleToggleSign(){
-  setDisplay(String(parseFloat(display.textContent)*-1));
-}
-function handlePercent(){
-  setDisplay(String(parseFloat(display.textContent)/100));
-}
+            static convertUnit(value, from, to, category) {
+                const conversions = {
+                    length: {
+                        meter: 1,
+                        kilometer: 0.001,
+                        centimeter: 100,
+                        millimeter: 1000,
+                        mile: 0.000621371,
+                        yard: 1.09361,
+                        foot: 3.28084,
+                        inch: 39.3701
+                    },
+                    weight: {
+                        kilogram: 1,
+                        gram: 1000,
+                        milligram: 1000000,
+                        pound: 2.20462,
+                        ounce: 35.274
+                    },
+                    temperature: {}, // Special handling
+                    volume: {
+                        liter: 1,
+                        milliliter: 1000,
+                        gallon: 0.264172,
+                        quart: 1.05669,
+                        pint: 2.11338,
+                        cup: 4.22675
+                    },
+                    speed: {
+                        mps: 1,
+                        kph: 3.6,
+                        mph: 2.23694,
+                        knot: 1.94384
+                    }
+                };
 
-/* ---------- EVENTS ---------- */
-document.querySelectorAll(".btn").forEach(btn=>{
-  btn.addEventListener("click", ()=>{
-    if(btn.dataset.num!==undefined) handleNumber(btn.dataset.num);
-    if(btn.dataset.op!==undefined) handleOperator(btn.dataset.op);
-    if(btn.dataset.fn!==undefined) handleFunction(btn.dataset.fn);
-    if(btn.dataset.action==='clear') handleClear();
-    if(btn.dataset.action==='decimal') handleDecimal();
-    if(btn.dataset.action==='evaluate') handleEvaluate();
-    if(btn.dataset.action==='toggle-sign') handleToggleSign();
-    if(btn.dataset.action==='percent') handlePercent();
-  });
-});
+                if (category === 'temperature') {
+                    return this.convertTemperature(value, from, to);
+                }
 
-/* ---------- KEYBOARD ---------- */
-window.addEventListener("keydown", e=>{
-  if(e.key>='0'&&e.key<='9') handleNumber(e.key);
-  if(e.key==='.') handleDecimal();
-  if(e.key==='+') handleOperator('+');
-  if(e.key==='-') handleOperator('-');
-  if(e.key==='*') handleOperator('*');
-  if(e.key==='/') handleOperator('/');
-  if(e.key==='Enter') handleEvaluate();
-  if(e.key==='Escape') handleClear();
-});
-</script>
+                const base = conversions[category];
+                return (value / base[from]) * base[to];
+            }
+
+            static convertTemperature(value, from, to) {
+                let celsius;
+                
+                switch(from) {
+                    case 'celsius': celsius = value; break;
+                    case 'fahrenheit': celsius = (value - 32) * 5/9; break;
+                    case 'kelvin': celsius = value - 273.15; break;
+                }
+
+                switch(to) {
+                    case 'celsius': return celsius;
+                    case 'fahrenheit': return (celsius * 9/5) + 32;
+                    case 'kelvin': return celsius + 273.15;
+                }
+            }
+
+            static solveQuadratic(a, b, c) {
+                const discriminant = b * b - 4 * a * c;
+                
+                if (discriminant < 0) {
+                    return { type: 'complex', roots: [] };
+                } else if (discriminant === 0) {
+                    return { type: 'single', roots: [-b / (2 * a)] };
+                } else {
+                    return {
+                        type: 'double',
+                        roots: [
+                            (-b + Math.sqrt(discriminant)) / (2 * a),
+                            (-b - Math.sqrt(discriminant)) / (2 * a)
+                        ]
+                    };
+                }
+            }
+
+            static calculateEMI(principal, rate, months) {
+                const r = rate / 12 / 100;
+                const emi = (principal * r * Math.pow(1 + r, months)) / (Math.pow(1 + r, months) - 1);
+                const total = emi * months;
+                const interest = total - principal;
+                
+                return { emi, total, interest };
+            }
+
+            static calculateBMI(weight, height) {
+                const bmi = weight / ((height / 100) ** 2);
+                let category;
+                
+                if (bmi < 18.5) category = 'Underweight';
+                else if (bmi < 25) category = 'Normal';
+                else if (bmi < 30) category = 'Overweight';
+                else category = 'Obese';
+                
+                return { bmi: bmi.toFixed(2), category };
+            }
+
+            static calculateBMR(weight, height, age, gender) {
+                let bmr;
+                if (gender === 'male') {
+                    bmr = 88.362 + (13.397 * weight) + (4.799 * height) - (5.677 * age);
+                } else {
+                    bmr = 447.593 + (9.247 * weight) + (3.098 * height) - (4.330 * age);
+                }
+                
+                return {
+                    bmr: bmr.toFixed(0),
+                    sedentary: (bmr * 1.2).toFixed(0),
+                    light: (bmr * 1.375).toFixed(0),
+                    moderate: (bmr * 1.55).toFixed(0),
+                    active: (bmr * 1.725).toFixed(0),
+                    veryActive: (bmr * 1.9).toFixed(0)
+                };
+            }
+        }
+
+        // ===== UI BUILDERS =====
+        class UIBuilder {
+            static buildBasicCalculator() {
+                let display = '0';
+                let currentOperation = null;
+                let previousValue = null;
+                let shouldResetDisplay = false;
+
+                const html = `
+                    <div class="calc-display" id="display" aria-live="polite" aria-atomic="true">0</div>
+                    <div class="calc-buttons" role="group" aria-label="Calculator buttons">
+                        ${UIBuilder.generateCalcButtons()}
+                    </div>
+                    <div class="history-panel">
+                        <h4>History</h4>
+                        <div id="calcHistory"></div>
+                    </div>
+                `;
+
+                setTimeout(() => {
+                    const displayEl = document.getElementById('display');
+                    const buttons = document.querySelectorAll('.calc-btn');
+
+                    buttons.forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            const value = btn.dataset.value;
+                            const type = btn.dataset.type;
+
+                            if (type === 'number') {
+                                if (shouldResetDisplay) {
+                                    display = value;
+                                    shouldResetDisplay = false;
+                                } else {
+                                    display = display === '0' ? value : display + value;
+                                }
+                            } else if (type === 'operator') {
+                                if (previousValue !== null && currentOperation && !shouldResetDisplay) {
+                                    const result = UIBuilder.executeOperation(previousValue, parseFloat(display), currentOperation);
+                                    display = result.toString();
+                                    UIBuilder.addToHistory(`${previousValue} ${currentOperation} ${display} = ${result}`);
+                                }
+                                previousValue = parseFloat(display);
+                                currentOperation = value;
+                                shouldResetDisplay = true;
+                            } else if (type === 'equals') {
+                                if (previousValue !== null && currentOperation) {
+                                    const result = UIBuilder.executeOperation(previousValue, parseFloat(display), currentOperation);
+                                    UIBuilder.addToHistory(`${previousValue} ${currentOperation} ${display} = ${result}`);
+                                    display = result.toString();
+                                    previousValue = null;
+                                    currentOperation = null;
+                                    shouldResetDisplay = true;
+                                }
+                            } else if (type === 'clear') {
+                                display = '0';
+                                previousValue = null;
+                                currentOperation = null;
+                                shouldResetDisplay = false;
+                            } else if (type === 'decimal') {
+                                if (!display.includes('.')) {
+                                    display += '.';
+                                }
+                            }
+
+                            displayEl.textContent = display;
+                        });
+                    });
+                }, 100);
+
+                return html;
+            }
+
+            static generateCalcButtons() {
+                const buttons = [
+                    { value: 'C', type: 'clear', class: 'wide' },
+                    { value: '/', type: 'operator', class: 'operator' },
+                    { value: '*', type: 'operator', class: 'operator' },
+                    { value: '7', type: 'number' },
+                    { value: '8', type: 'number' },
+                    { value: '9', type: 'number' },
+                    { value: '-', type: 'operator', class: 'operator' },
+                    { value: '4', type: 'number' },
+                    { value: '5', type: 'number' },
+                    { value: '6', type: 'number' },
+                    { value: '+', type: 'operator', class: 'operator' },
+                    { value: '1', type: 'number' },
+                    { value: '2', type: 'number' },
+                    { value: '3', type: 'number' },
+                    { value: '=', type: 'equals', class: 'operator' },
+                    { value: '0', type: 'number', class: 'wide' },
+                    { value: '.', type: 'decimal' }
+                ];
+
+                return buttons.map(btn => 
+                    `<button class="calc-btn ${btn.class || ''}" data-value="${btn.value}" data-type="${btn.type}" aria-label="${btn.value}">${btn.value}</button>`
+                ).join('');
+            }
+
+            static executeOperation(a, b, op) {
+                switch(op) {
+                    case '+': return a + b;
+                    case '-': return a - b;
+                    case '*': return a * b;
+                    case '/': return b !== 0 ? a / b : 'Error';
+                    default: return b;
+                }
+            }
+
+            static addToHistory(entry) {
+                const historyEl = document.getElementById('calcHistory');
+                if (historyEl) {
+                    const item = document.createElement('div');
+                    item.className = 'history-item';
+                    item.textContent = entry;
+                    historyEl.insertBefore(item, historyEl.firstChild);
+                    AppState.saveHistory({ calc: 'basic', entry, timestamp: Date.now() });
+                }
+            }
+
+            static buildPercentageCalculator() {
+                return `
+                    <div class="form-group">
+                        <label for="percentOp">Operation</label>
+                        <select id="percentOp">
+                            <option value="of">What is X% of Y?</option>
+                            <option value="increase">Increase by X%</option>
+                            <option value="decrease">Decrease by X%</option>
+                            <option value="change">% Change</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="percentValue">Value</label>
+                        <input type="number" id="percentValue" placeholder="Enter value">
+                    </div>
+                    <div class="form-group">
+                        <label for="percentPercent">Percentage</label>
+                        <input type="number" id="percentPercent" placeholder="Enter percentage">
+                    </div>
+                    <button class="primary" onclick="UIBuilder.calculatePercentage()">Calculate</button>
+                    <div id="percentResult"></div>
+                `;
+            }
+
+            static calculatePercentage() {
+                const op = document.getElementById('percentOp').value;
+                const value = parseFloat(document.getElementById('percentValue').value);
+                const percent = parseFloat(document.getElementById('percentPercent').value);
+                
+                if (isNaN(value) || isNaN(percent)) {
+                    this.showResult('percentResult', 'Please enter valid numbers', true);
+                    return;
+                }
+
+                const result = CalculatorEngine.percentage(value, percent, op);
+                let message;
+                
+                switch(op) {
+                    case 'of': message = `${percent}% of ${value} = ${result.toFixed(2)}`; break;
+                    case 'increase': message = `${value} increased by ${percent}% = ${result.toFixed(2)}`; break;
+                    case 'decrease': message = `${value} decreased by ${percent}% = ${result.toFixed(2)}`; break;
+                    case 'change': message = `% change from ${value} to ${percent} = ${result.toFixed(2)}%`; break;
+                }
+                
+                this.showResult('percentResult', message);
+                AppState.saveHistory({ calc: 'percentage', entry: message, timestamp: Date.now() });
+            }
+
+            static buildUnitConverter() {
+                return `
+                    <div class="form-group">
+                        <label for="unitCategory">Category</label>
+                        <select id="unitCategory" onchange="UIBuilder.updateUnitOptions()">
+                            <option value="length">Length</option>
+                            <option value="weight">Weight</option>
+                            <option value="temperature">Temperature</option>
+                            <option value="volume">Volume</option>
+                            <option value="speed">Speed</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="unitValue">Value</label>
+                        <input type="number" id="unitValue" placeholder="Enter value">
+                    </div>
+                    <div class="flex-row">
+                        <div class="form-group">
+                            <label for="unitFrom">From</label>
+                            <select id="unitFrom"></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="unitTo">To</label>
+                            <select id="unitTo"></select>
+                        </div>
+                    </div>
+                    <button class="primary" onclick="UIBuilder.convertUnit()">Convert</button>
+                    <div id="unitResult"></div>
+                `;
+            }
+
+            static updateUnitOptions() {
+                const units = {
+                    length: ['meter', 'kilometer', 'centimeter', 'millimeter', 'mile', 'yard', 'foot', 'inch'],
+                    weight: ['kilogram', 'gram', 'milligram', 'pound', 'ounce'],
+                    temperature: ['celsius', 'fahrenheit', 'kelvin'],
+                    volume: ['liter', 'milliliter', 'gallon', 'quart', 'pint', 'cup'],
+                    speed: ['mps', 'kph', 'mph', 'knot']
+                };
+
+                const category = document.getElementById('unitCategory').value;
+                const fromSelect = document.getElementById('unitFrom');
+                const toSelect = document.getElementById('unitTo');
+                
+                fromSelect.innerHTML = units[category].map(u => `<option value="${u}">${u}</option>`).join('');
+                toSelect.innerHTML = units[category].map(u => `<option value="${u}">${u}</option>`).join('');
+                toSelect.selectedIndex = 1;
+            }
+
+            static convertUnit() {
+                const value = parseFloat(document.getElementById('unitValue').value);
+                const from = document.getElementById('unitFrom').value;
+                const to = document.getElementById('unitTo').value;
+                const category = document.getElementById('unitCategory').value;
+                
+                if (isNaN(value)) {
+                    this.showResult('unitResult', 'Please enter a valid number', true);
+                    return;
+                }
+
+                const result = CalculatorEngine.convertUnit(value, from, to, category);
+                const message = `${value} ${from} = ${result.toFixed(4)} ${to}`;
+                this.showResult('unitResult', message);
+            }
+
+            static buildScientificCalculator() {
+                return `
+                    <div class="calc-display" id="sciDisplay">0</div>
+                    <div class="sci-calc-buttons">
+                        <button class="calc-btn sci-calc-btn" onclick="UIBuilder.sciCalc('sin')">sin</button>
+                        <button class="calc-btn sci-calc-btn" onclick="UIBuilder.sciCalc('cos')">cos</button>
+                        <button class="calc-btn sci-calc-btn" onclick="UIBuilder.sciCalc('tan')">tan</button>
+                        <button class="calc-btn sci-calc-btn" onclick="UIBuilder.sciCalc('log')">log</button>
+                        <button class="calc-btn sci-calc-btn" onclick="UIBuilder.sciCalc('ln')">ln</button>
+                        <button class="calc-btn sci-calc-btn" onclick="UIBuilder.sciCalc('sqrt')">√</button>
+                        <button class="calc-btn sci-calc-btn" onclick="UIBuilder.sciCalc('pow')">x²</button>
+                        <button class="calc-btn sci-calc-btn" onclick="UIBuilder.sciCalc('pi')">π</button>
+                        <button class="calc-btn sci-calc-btn" onclick="UIBuilder.sciCalc('e')">e</button>
+                        <button class="calc-btn sci-calc-btn operator" onclick="UIBuilder.sciCalc('clear')">C</button>
+                        <button class="calc-btn sci-calc-btn" onclick="UIBuilder.sciCalc('7')">7</button>
+                        <button class="calc-btn sci-calc-btn" onclick="UIBuilder.sciCalc('8')">8</button>
+                        <button class="calc-btn sci-calc-btn" onclick="UIBuilder.sciCalc('9')">9</button>
+                        <button class="calc-btn sci-calc-btn operator" onclick="UIBuilder.sciCalc('/')">/</button>
+                        <button class="calc-btn sci-calc-btn operator" onclick="UIBuilder.sciCalc('*')">×</button>
+                        <button class="calc-btn sci-calc-btn" onclick="UIBuilder.sciCalc('4')">4</button>
+                        <button class="calc-btn sci-calc-btn" onclick="UIBuilder.sciCalc('5')">5</button>
+                        <button class="calc-btn sci-calc-btn" onclick="UIBuilder.sciCalc('6')">6</button>
+                        <button class="calc-btn sci-calc-btn operator" onclick="UIBuilder.sciCalc('-')">-</button>
+                        <button class="calc-btn sci-calc-btn operator" onclick="UIBuilder.sciCalc('+')">+</button>
+                        <button class="calc-btn sci-calc-btn" onclick="UIBuilder.sciCalc('1')">1</button>
+                        <button class="calc-btn sci-calc-btn" onclick="UIBuilder.sciCalc('2')">2</button>
+                        <button class="calc-btn sci-calc-btn" onclick="UIBuilder.sciCalc('3')">3</button>
+                        <button class="calc-btn sci-calc-btn" onclick="UIBuilder.sciCalc('(')">(</button>
+                        <button class="calc-btn sci-calc-btn" onclick="UIBuilder.sciCalc(')')">)</button>
+                        <button class="calc-btn sci-calc-btn" onclick="UIBuilder.sciCalc('0')">0</button>
+                        <button class="calc-btn sci-calc-btn" onclick="UIBuilder.sciCalc('.')">.</button>
+                        <button class="calc-btn sci-calc-btn operator" onclick="UIBuilder.sciEvaluate()">=</button>
+                    </div>
+                    <p class="text-small mt-2">Trigonometric functions use radians</p>
+                `;
+            }
+
+            static sciCalc(value) {
+                const display = document.getElementById('sciDisplay');
+                let current = display.textContent;
+                
+                if (current === '0' || current === 'Error') current = '';
+                
+                const operations = {
+                    'sin': 'Math.sin(',
+                    'cos': 'Math.cos(',
+                    'tan': 'Math.tan(',
+                    'log': 'Math.log10(',
+                    'ln': 'Math.log(',
+                    'sqrt': 'Math.sqrt(',
+                    'pow': '**2',
+                    'pi': Math.PI.toString(),
+                    'e': Math.E.toString(),
+                    'clear': ''
+                };
+                
+                if (operations.hasOwnProperty(value)) {
+                    if (value === 'clear') {
+                        display.textContent = '0';
+                    } else if (value === 'pow') {
+                        display.textContent = current + operations[value];
+                    } else {
+                        display.textContent = current + operations[value];
+                    }
+                } else {
+                    display.textContent = current + value;
+                }
+            }
+
+            static sciEvaluate() {
+                const display = document.getElementById('sciDisplay');
+                try {
+                    const result = eval(display.textContent);
+                    display.textContent = result;
+                    AppState.saveHistory({ calc: 'scientific', entry: `${display.textContent} = ${result}`, timestamp: Date.now() });
+                } catch {
+                    display.textContent = 'Error';
+                }
+            }
+
+            static buildAlgebraSolver() {
+                return `
+                    <div class="form-group">
+                        <label for="equationType">Equation Type</label>
+                        <select id="equationType">
+                            <option value="linear">Linear (ax + b = 0)</option>
+                            <option value="quadratic">Quadratic (ax² + bx + c = 0)</option>
+                        </select>
+                    </div>
+                    <div class="flex-row">
+                        <div class="form-group">
+                            <label for="coeffA">a</label>
+                            <input type="number" id="coeffA" value="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="coeffB">b</label>
+                            <input type="number" id="coeffB" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="coeffC">c</label>
+                            <input type="number" id="coeffC" value="0">
+                        </div>
+                    </div>
+                    <button class="primary" onclick="UIBuilder.solveEquation()">Solve</button>
+                    <div id="algebraResult"></div>
+                `;
+            }
+
+            static solveEquation() {
+                const type = document.getElementById('equationType').value;
+                const a = parseFloat(document.getElementById('coeffA').value);
+                const b = parseFloat(document.getElementById('coeffB').value);
+                const c = parseFloat(document.getElementById('coeffC').value);
+                
+                if (type === 'linear') {
+                    if (a === 0) {
+                        this.showResult('algebraResult', 'Invalid: coefficient a cannot be 0', true);
+                        return;
+                    }
+                    const x = -b / a;
+                    this.showResult('algebraResult', `Solution: x = ${x.toFixed(4)}`);
+                } else {
+                    const solution = CalculatorEngine.solveQuadratic(a, b, c);
+                    let message;
+                    
+                    if (solution.type === 'complex') {
+                        message = 'No real solutions (complex roots)';
+                    } else if (solution.type === 'single') {
+                        message = `One solution: x = ${solution.roots[0].toFixed(4)}`;
+                    } else {
+                        message = `Two solutions: x₁ = ${solution.roots[0].toFixed(4)}, x₂ = ${solution.roots[1].toFixed(4)}`;
+                    }
+                    
+                    this.showResult('algebraResult', message);
+                }
+            }
+
+            static buildMatrixCalculator() {
+                return `
+                    <div class="form-group">
+                        <label>Matrix A (2x2)</label>
+                        <div class="matrix-input">
+                            <div class="matrix-row">
+                                <input type="number" class="matrix-cell" id="a11" value="1">
+                                <input type="number" class="matrix-cell" id="a12" value="2">
+                            </div>
+                            <div class="matrix-row">
+                                <input type="number" class="matrix-cell" id="a21" value="3">
+                                <input type="number" class="matrix-cell" id="a22" value="4">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Matrix B (2x2)</label>
+                        <div class="matrix-input">
+                            <div class="matrix-row">
+                                <input type="number" class="matrix-cell" id="b11" value="5">
+                                <input type="number" class="matrix-cell" id="b12" value="6">
+                            </div>
+                            <div class="matrix-row">
+                                <input type="number" class="matrix-cell" id="b21" value="7">
+                                <input type="number" class="matrix-cell" id="b22" value="8">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex-row">
+                        <button class="secondary" onclick="UIBuilder.matrixOp('add')">Add</button>
+                        <button class="secondary" onclick="UIBuilder.matrixOp('subtract')">Subtract</button>
+                        <button class="secondary" onclick="UIBuilder.matrixOp('multiply')">Multiply</button>
+                    </div>
+                    <button class="primary" onclick="UIBuilder.matrixDeterminant()">Determinant of A</button>
+                    <div id="matrixResult"></div>
+                `;
+            }
+
+            static matrixOp(operation) {
+                const a = [[parseFloat(document.getElementById('a11').value), parseFloat(document.getElementById('a12').value)],
+                          [parseFloat(document.getElementById('a21').value), parseFloat(document.getElementById('a22').value)]];
+                const b = [[parseFloat(document.getElementById('b11').value), parseFloat(document.getElementById('b12').value)],
+                          [parseFloat(document.getElementById('b21').value), parseFloat(document.getElementById('b22').value)]];
+                
+                let result;
+                if (operation === 'add') {
+                    result = [[a[0][0]+b[0][0], a[0][1]+b[0][1]], [a[1][0]+b[1][0], a[1][1]+b[1][1]]];
+                } else if (operation === 'subtract') {
+                    result = [[a[0][0]-b[0][0], a[0][1]-b[0][1]], [a[1][0]-b[1][0], a[1][1]-b[1][1]]];
+                } else if (operation === 'multiply') {
+                    result = [[a[0][0]*b[0][0]+a[0][1]*b[1][0], a[0][0]*b[0][1]+a[0][1]*b[1][1]],
+                             [a[1][0]*b[0][0]+a[1][1]*b[1][0], a[1][0]*b[0][1]+a[1][1]*b[1][1]]];
+                }
+                
+                const display = `Result:<br>[${result[0][0]}, ${result[0][1]}]<br>[${result[1][0]}, ${result[1][1]}]`;
+                document.getElementById('matrixResult').innerHTML = `<div class="result"><h4>Matrix ${operation}</h4>${display}</div>`;
+            }
+
+            static matrixDeterminant() {
+                const a11 = parseFloat(document.getElementById('a11').value);
+                const a12 = parseFloat(document.getElementById('a12').value);
+                const a21 = parseFloat(document.getElementById('a21').value);
+                const a22 = parseFloat(document.getElementById('a22').value);
+                
+                const det = a11 * a22 - a12 * a21;
+                this.showResult('matrixResult', `Determinant = ${det}`);
+            }
+
+            static buildLoanCalculator() {
+                return `
+                    <div class="form-group">
+                        <label for="loanAmount">Loan Amount</label>
+                        <input type="number" id="loanAmount" placeholder="100000">
+                    </div>
+                    <div class="form-group">
+                        <label for="loanRate">Interest Rate (% per year)</label>
+                        <input type="number" id="loanRate" step="0.1" placeholder="8.5">
+                    </div>
+                    <div class="form-group">
+                        <label for="loanTenure">Tenure (months)</label>
+                        <input type="number" id="loanTenure" placeholder="60">
+                    </div>
+                    <button class="primary" onclick="UIBuilder.calculateLoan()">Calculate EMI</button>
+                    <div id="loanResult"></div>
+                `;
+            }
+
+            static calculateLoan() {
+                const principal = parseFloat(document.getElementById('loanAmount').value);
+                const rate = parseFloat(document.getElementById('loanRate').value);
+                const months = parseInt(document.getElementById('loanTenure').value);
+                
+                if (isNaN(principal) || isNaN(rate) || isNaN(months)) {
+                    this.showResult('loanResult', 'Please fill all fields', true);
+                    return;
+                }
+
+                const result = CalculatorEngine.calculateEMI(principal, rate, months);
+                const html = `
+                    <div class="result">
+                        <h4>Loan Summary</h4>
+                        <p><strong>Monthly EMI:</strong> ₹${result.emi.toFixed(2)}</p>
+                        <p><strong>Total Payment:</strong> ₹${result.total.toFixed(2)}</p>
+                        <p><strong>Total Interest:</strong> ₹${result.interest.toFixed(2)}</p>
+                    </div>
+                `;
+                document.getElementById('loanResult').innerHTML = html;
+            }
+
+            static buildInterestCalculator() {
+                return `
+                    <div class="form-group">
+                        <label for="interestType">Type</label>
+                        <select id="interestType">
+                            <option value="simple">Simple Interest</option>
+                            <option value="compound">Compound Interest</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="principal">Principal Amount</label>
+                        <input type="number" id="principal" placeholder="10000">
+                    </div>
+                    <div class="form-group">
+                        <label for="rate">Rate (% per year)</label>
+                        <input type="number" id="rate" step="0.1" placeholder="5">
+                    </div>
+                    <div class="form-group">
+                        <label for="time">Time (years)</label>
+                        <input type="number" id="time" placeholder="3">
+                    </div>
+                    <div class="form-group" id="compoundFreqGroup" style="display:none;">
+                        <label for="frequency">Compound Frequency</label>
+                        <select id="frequency">
+                            <option value="1">Annually</option>
+                            <option value="2">Semi-annually</option>
+                            <option value="4">Quarterly</option>
+                            <option value="12">Monthly</option>
+                        </select>
+                    </div>
+                    <button class="primary" onclick="UIBuilder.calculateInterest()">Calculate</button>
+                    <div id="interestResult"></div>
+                `;
+            }
+
+            static calculateInterest() {
+                const type = document.getElementById('interestType').value;
+                const p = parseFloat(document.getElementById('principal').value);
+                const r = parseFloat(document.getElementById('rate').value) / 100;
+                const t = parseFloat(document.getElementById('time').value);
+                
+                if (isNaN(p) || isNaN(r) || isNaN(t)) {
+                    this.showResult('interestResult', 'Please fill all fields', true);
+                    return;
+                }
+
+                let amount, interest;
+                if (type === 'simple') {
+                    interest = p * r * t;
+                    amount = p + interest;
+                } else {
+                    const n = parseInt(document.getElementById('frequency').value);
+                    amount = p * Math.pow((1 + r/n), n*t);
+                    interest = amount - p;
+                }
+                
+                const html = `
+                    <div class="result">
+                        <h4>${type === 'simple' ? 'Simple' : 'Compound'} Interest</h4>
+                        <p><strong>Interest:</strong> ₹${interest.toFixed(2)}</p>
+                        <p><strong>Final Amount:</strong> ₹${amount.toFixed(2)}</p>
+                    </div>
+                `;
+                document.getElementById('interestResult').innerHTML = html;
+            }
+
+            static buildInvestmentCalculator() {
+                return `
+                    <div class="form-group">
+                        <label for="investType">Investment Type</label>
+                        <select id="investType">
+                            <option value="sip">SIP (Monthly)</option>
+                            <option value="lumpsum">Lump Sum</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="investAmount">Amount</label>
+                        <input type="number" id="investAmount" placeholder="5000">
+                    </div>
+                    <div class="form-group">
+                        <label for="investReturn">Expected Return (% per year)</label>
+                        <input type="number" id="investReturn" step="0.1" placeholder="12">
+                    </div>
+                    <div class="form-group">
+                        <label for="investPeriod">Period (years)</label>
+                        <input type="number" id="investPeriod" placeholder="10">
+                    </div>
+                    <button class="primary" onclick="UIBuilder.calculateInvestment()">Calculate Returns</button>
+                    <div id="investmentResult"></div>
+                `;
+            }
+
+            static calculateInvestment() {
+                const type = document.getElementById('investType').value;
+                const amount = parseFloat(document.getElementById('investAmount').value);
+                const returnRate = parseFloat(document.getElementById('investReturn').value) / 100;
+                const years = parseFloat(document.getElementById('investPeriod').value);
+                
+                if (isNaN(amount) || isNaN(returnRate) || isNaN(years)) {
+                    this.showResult('investmentResult', 'Please fill all fields', true);
+                    return;
+                }
+
+                let futureValue, invested;
+                if (type === 'sip') {
+                    const monthlyRate = returnRate / 12;
+                    const months = years * 12;
+                    futureValue = amount * (((Math.pow(1 + monthlyRate, months) - 1) / monthlyRate) * (1 + monthlyRate));
+                    invested = amount * months;
+                } else {
+                    futureValue = amount * Math.pow(1 + returnRate, years);
+                    invested = amount;
+                }
+                
+                const gains = futureValue - invested;
+                const html = `
+                    <div class="result">
+                        <h4>Investment Returns</h4>
+                        <p><strong>Invested Amount:</strong> ₹${invested.toFixed(2)}</p>
+                        <p><strong>Returns:</strong> ₹${gains.toFixed(2)}</p>
+                        <p><strong>Final Value:</strong> ₹${futureValue.toFixed(2)}</p>
+                    </div>
+                `;
+                document.getElementById('investmentResult').innerHTML = html;
+            }
+
+            static buildCurrencyConverter() {
+                return `
+                    <div class="form-group">
+                        <label for="currencyAmount">Amount</label>
+                        <input type="number" id="currencyAmount" placeholder="100">
+                    </div>
+                    <div class="flex-row">
+                        <div class="form-group">
+                            <label for="currencyFrom">From</label>
+                            <select id="currencyFrom">
+                                <option value="USD">USD</option>
+                                <option value="EUR">EUR</option>
+                                <option value="GBP">GBP</option>
+                                <option value="INR">INR</option>
+                                <option value="JPY">JPY</option>
+                                <option value="AUD">AUD</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="currencyTo">To</label>
+                            <select id="currencyTo">
+                                <option value="USD">USD</option>
+                                <option value="EUR" selected>EUR</option>
+                                <option value="GBP">GBP</option>
+                                <option value="INR">INR</option>
+                                <option value="JPY">JPY</option>
+                                <option value="AUD">AUD</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="primary" onclick="UIBuilder.convertCurrency()">Convert</button>
+                    <div id="currencyResult"></div>
+                    <p class="text-small mt-2">Note: Using mock exchange rates. Connect to API for live rates.</p>
+                `;
+            }
+
+            static convertCurrency() {
+                const amount = parseFloat(document.getElementById('currencyAmount').value);
+                const from = document.getElementById('currencyFrom').value;
+                const to = document.getElementById('currencyTo').value;
+                
+                if (isNaN(amount)) {
+                    this.showResult('currencyResult', 'Please enter an amount', true);
+                    return;
+                }
+
+                // Mock exchange rates (to USD)
+                const rates = {USD: 1, EUR: 0.85, GBP: 0.73, INR: 83, JPY: 110, AUD: 1.35};
+                const result = (amount / rates[from]) * rates[to];
+                
+                this.showResult('currencyResult', `${amount} ${from} = ${result.toFixed(2)} ${to}`);
+            }
+
+            static buildBMICalculator() {
+                return `
+                    <div class="form-group">
+                        <label for="bmiWeight">Weight (kg)</label>
+                        <input type="number" id="bmiWeight" placeholder="70">
+                    </div>
+                    <div class="form-group">
+                        <label for="bmiHeight">Height (cm)</label>
+                        <input type="number" id="bmiHeight" placeholder="175">
+                    </div>
+                    <button class="primary" onclick="UIBuilder.calculateBMI()">Calculate BMI</button>
+                    <div id="bmiResult"></div>
+                `;
+            }
+
+            static calculateBMI() {
+                const weight = parseFloat(document.getElementById('bmiWeight').value);
+                const height = parseFloat(document.getElementById('bmiHeight').value);
+                
+                if (isNaN(weight) || isNaN(height)) {
+                    this.showResult('bmiResult', 'Please enter valid values', true);
+                    return;
+                }
+
+                const result = CalculatorEngine.calculateBMI(weight, height);
+                const html = `
+                    <div class="result">
+                        <h4>Your BMI</h4>
+                        <p class="result-value">${result.bmi}</p>
+                        <p><strong>Category:</strong> ${result.category}</p>
+                    </div>
+                `;
+                document.getElementById('bmiResult').innerHTML = html;
+            }
+
+            static buildBMRCalculator() {
+                return `
+                    <div class="form-group">
+                        <label for="bmrWeight">Weight (kg)</label>
+                        <input type="number" id="bmrWeight" placeholder="70">
+                    </div>
+                    <div class="form-group">
+                        <label for="bmrHeight">Height (cm)</label>
+                        <input type="number" id="bmrHeight" placeholder="175">
+                    </div>
+                    <div class="form-group">
+                        <label for="bmrAge">Age</label>
+                        <input type="number" id="bmrAge" placeholder="30">
+                    </div>
+                    <div class="form-group">
+                        <label for="bmrGender">Gender</label>
+                        <select id="bmrGender">
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                        </select>
+                    </div>
+                    <button class="primary" onclick="UIBuilder.calculateBMR()">Calculate BMR</button>
+                    <div id="bmrResult"></div>
+                `;
+            }
+
+            static calculateBMR() {
+                const weight = parseFloat(document.getElementById('bmrWeight').value);
+                const height = parseFloat(document.getElementById('bmrHeight').value);
+                const age = parseInt(document.getElementById('bmrAge').value);
+                const gender = document.getElementById('bmrGender').value;
+                
+                if (isNaN(weight) || isNaN(height) || isNaN(age)) {
+                    this.showResult('bmrResult', 'Please enter valid values', true);
+                    return;
+                }
+
+                const result = CalculatorEngine.calculateBMR(weight, height, age, gender);
+                const html = `
+                    <div class="result">
+                        <h4>Your BMR</h4>
+                        <p class="result-value">${result.bmr} cal/day</p>
+                        <h4 class="mt-2">Daily Calorie Needs</h4>
+                        <p><strong>Sedentary:</strong> ${result.sedentary} cal</p>
+                        <p><strong>Light Exercise:</strong> ${result.light} cal</p>
+                        <p><strong>Moderate Exercise:</strong> ${result.moderate} cal</p>
+                        <p><strong>Active:</strong> ${result.active} cal</p>
+                        <p><strong>Very Active:</strong> ${result.veryActive} cal</p>
+                    </div>
+                `;
+                document.getElementById('bmrResult').innerHTML = html;
+            }
+
+            static buildAgeCalculator() {
+                return `
+                    <div class="form-group">
+                        <label for="birthDate">Date of Birth</label>
+                        <input type="date" id="birthDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="calcDate">Calculate Age On</label>
+                        <input type="date" id="calcDate" value="${new Date().toISOString().split('T')[0]}">
+                    </div>
+                    <button class="primary" onclick="UIBuilder.calculateAge()">Calculate Age</button>
+                    <div id="ageResult"></div>
+                `;
+            }
+
+            static calculateAge() {
+                const birthDate = new Date(document.getElementById('birthDate').value);
+                const calcDate = new Date(document.getElementById('calcDate').value);
+                
+                if (!document.getElementById('birthDate').value) {
+                    this.showResult('ageResult', 'Please select a birth date', true);
+                    return;
+                }
+
+                let years = calcDate.getFullYear() - birthDate.getFullYear();
+                let months = calcDate.getMonth() - birthDate.getMonth();
+                let days = calcDate.getDate() - birthDate.getDate();
+                
+                if (days < 0) {
+                    months--;
+                    days += new Date(calcDate.getFullYear(), calcDate.getMonth(), 0).getDate();
+                }
+                if (months < 0) {
+                    years--;
+                    months += 12;
+                }
+                
+                const totalDays = Math.floor((calcDate - birthDate) / (1000 * 60 * 60 * 24));
+                const totalMonths = years * 12 + months;
+                
+                const html = `
+                    <div class="result">
+                        <h4>Age Details</h4>
+                        <p class="result-value">${years} years, ${months} months, ${days} days</p>
+                        <p><strong>Total:</strong> ${totalMonths} months or ${totalDays} days</p>
+                        <p><strong>Next Birthday:</strong> ${this.getNextBirthday(birthDate, calcDate)}</p>
+                    </div>
+                `;
+                document.getElementById('ageResult').innerHTML = html;
+            }
+
+            static getNextBirthday(birthDate, currentDate) {
+                const nextBday = new Date(currentDate.getFullYear(), birthDate.getMonth(), birthDate.getDate());
+                if (nextBday < currentDate) {
+                    nextBday.setFullYear(nextBday.getFullYear() + 1);
+                }
+                const days = Math.ceil((nextBday - currentDate) / (1000 * 60 * 60 * 24));
+                return `in ${days} days`;
+            }
+
+            static buildPregnancyCalculator() {
+                return `
+                    <div class="form-group">
+                        <label for="lmpDate">Last Menstrual Period (LMP)</label>
+                        <input type="date" id="lmpDate">
+                    </div>
+                    <button class="primary" onclick="UIBuilder.calculatePregnancy()">Calculate Due Date</button>
+                    <div id="pregnancyResult"></div>
+                `;
+            }
+
+            static calculatePregnancy() {
+                const lmpDate = new Date(document.getElementById('lmpDate').value);
+                
+                if (!document.getElementById('lmpDate').value) {
+                    this.showResult('pregnancyResult', 'Please select LMP date', true);
+                    return;
+                }
+
+                const dueDate = new Date(lmpDate);
+                dueDate.setDate(dueDate.getDate() + 280); // 40 weeks
+                
+                const today = new Date();
+                const weeksPregnant = Math.floor((today - lmpDate) / (1000 * 60 * 60 * 24 * 7));
+                const daysIntoWeek = Math.floor(((today - lmpDate) / (1000 * 60 * 60 * 24)) % 7);
+                
+                const trimester = weeksPregnant < 13 ? 1 : weeksPregnant < 27 ? 2 : 3;
+                const daysUntilDue = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+                
+                const html = `
+                    <div class="result">
+                        <h4>Pregnancy Details</h4>
+                        <p><strong>Due Date:</strong> ${dueDate.toLocaleDateString()}</p>
+                        <p><strong>Current:</strong> ${weeksPregnant} weeks, ${daysIntoWeek} days</p>
+                        <p><strong>Trimester:</strong> ${trimester}</p>
+                        <p><strong>Days Until Due:</strong> ${daysUntilDue > 0 ? daysUntilDue : 'Overdue'}</p>
+                    </div>
+                `;
+                document.getElementById('pregnancyResult').innerHTML = html;
+            }
+
+            static buildDateDiffCalculator() {
+                return `
+                    <div class="form-group">
+                        <label for="startDate">Start Date</label>
+                        <input type="date" id="startDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="endDate">End Date</label>
+                        <input type="date" id="endDate" value="${new Date().toISOString().split('T')[0]}">
+                    </div>
+                    <button class="primary" onclick="UIBuilder.calculateDateDiff()">Calculate Difference</button>
+                    <div id="dateDiffResult"></div>
+                `;
+            }
+
+            static calculateDateDiff() {
+                const start = new Date(document.getElementById('startDate').value);
+                const end = new Date(document.getElementById('endDate').value);
+                
+                if (!document.getElementById('startDate').value) {
+                    this.showResult('dateDiffResult', 'Please select start date', true);
+                    return;
+                }
+
+                const diffTime = Math.abs(end - start);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                const diffWeeks = Math.floor(diffDays / 7);
+                const diffMonths = Math.floor(diffDays / 30.44);
+                const diffYears = Math.floor(diffDays / 365.25);
+                
+                const html = `
+                    <div class="result">
+                        <h4>Date Difference</h4>
+                        <p class="result-value">${diffDays} days</p>
+                        <p><strong>Weeks:</strong> ${diffWeeks}</p>
+                        <p><strong>Months:</strong> ${diffMonths}</p>
+                        <p><strong>Years:</strong> ${diffYears}</p>
+                        <p><strong>Business Days:</strong> ${this.calculateBusinessDays(start, end)}</p>
+                    </div>
+                `;
+                document.getElementById('dateDiffResult').innerHTML = html;
+            }
+
+            static calculateBusinessDays(start, end) {
+                let count = 0;
+                const current = new Date(start);
+                while (current <= end) {
+                    const day = current.getDay();
+                    if (day !== 0 && day !== 6) count++;
+                    current.setDate(current.getDate() + 1);
+                }
+                return count;
+            }
+
+            static buildTimeDurationCalculator() {
+                return `
+                    <div class="flex-row">
+                        <div class="form-group">
+                            <label for="startTime">Start Time</label>
+                            <input type="time" id="startTime">
+                        </div>
+                        <div class="form-group">
+                            <label for="endTime">End Time</label>
+                            <input type="time" id="endTime">
+                        </div>
+                    </div>
+                    <button class="primary" onclick="UIBuilder.calculateTimeDuration()">Calculate Duration</button>
+                    <div id="timeDurationResult"></div>
+                `;
+            }
+
+            static calculateTimeDuration() {
+                const start = document.getElementById('startTime').value;
+                const end = document.getElementById('endTime').value;
+                
+                if (!start || !end) {
+                    this.showResult('timeDurationResult', 'Please select both times', true);
+                    return;
+                }
+
+                const [startH, startM] = start.split(':').map(Number);
+                const [endH, endM] = end.split(':').map(Number);
+                
+                let totalMinutes = (endH * 60 + endM) - (startH * 60 + startM);
+                if (totalMinutes < 0) totalMinutes += 24 * 60;
+                
+                const hours = Math.floor(totalMinutes / 60);
+                const minutes = totalMinutes % 60;
+                
+                const html = `
+                    <div class="result">
+                        <h4>Time Duration</h4>
+                        <p class="result-value">${hours}h ${minutes}m</p>
+                        <p><strong>Total Minutes:</strong> ${totalMinutes}</p>
+                        <p><strong>Total Hours:</strong> ${(totalMinutes / 60).toFixed(2)}</p>
+                    </div>
+                `;
+                document.getElementById('timeDurationResult').innerHTML = html;
+            }
+
+            static buildCountdownCalculator() {
+                return `
+                    <div class="form-group">
+                        <label for="countdownDate">Target Date</label>
+                        <input type="date" id="countdownDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="countdownTime">Target Time (Optional)</label>
+                        <input type="time" id="countdownTime" value="00:00">
+                    </div>
+                    <div class="form-group">
+                        <label for="eventName">Event Name</label>
+                        <input type="text" id="eventName" placeholder="New Year">
+                    </div>
+                    <button class="primary" onclick="UIBuilder.startCountdown()">Start Countdown</button>
+                    <div id="countdownResult"></div>
+                `;
+            }
+
+            static startCountdown() {
+                const targetDate = document.getElementById('countdownDate').value;
+                const targetTime = document.getElementById('countdownTime').value;
+                const eventName = document.getElementById('eventName').value || 'Event';
+                
+                if (!targetDate) {
+                    this.showResult('countdownResult', 'Please select a date', true);
+                    return;
+                }
+
+                const target = new Date(`${targetDate}T${targetTime}`);
+                
+                const updateCountdown = () => {
+                    const now = new Date();
+                    const diff = target - now;
+                    
+                    if (diff < 0) {
+                        document.getElementById('countdownResult').innerHTML = `
+                            <div class="result">
+                                <h4>${eventName}</h4>
+                                <p class="result-value">Event has passed!</p>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                    
+                    document.getElementById('countdownResult').innerHTML = `
+                        <div class="result">
+                            <h4>Countdown to ${eventName}</h4>
+                            <p class="result-value">${days}d ${hours}h ${minutes}m ${seconds}s</p>
+                            <p><strong>Total Days:</strong> ${Math.floor(diff / (1000 * 60 * 60 * 24))}</p>
+                        </div>
+                    `;
+                };
+                
+                updateCountdown();
+                setInterval(updateCountdown, 1000);
+            }
+
+            static showResult(elementId, message, isError = false) {
+                const el = document.getElementById(elementId);
+                el.innerHTML = `<div class="result ${isError ? 'error' : ''}"><p>${message}</p></div>`;
+            }
+        }
+
+        // ===== APPLICATION CONTROLLER =====
+        class App {
+            static init() {
+                this.setupTheme();
+                this.renderCalculators();
+                this.setupEventListeners();
+            }
+
+            static setupTheme() {
+                document.documentElement.setAttribute('data-theme', AppState.theme);
+                document.getElementById('themeIcon').textContent = 
+                    AppState.theme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
+            }
+
+            static renderCalculators(filter = 'all') {
+                const grid = document.getElementById('calcGrid');
+                const filtered = filter === 'all' ? CALCULATORS : CALCULATORS.filter(c => c.category === filter);
+                
+                grid.innerHTML = filtered.map(calc => `
+                    <div class="calc-card" data-calc="${calc.id}" role="listitem">
+                        <h3>${calc.icon} ${calc.name}</h3>
+                        <p>${calc.description}</p>
+                    </div>
+                `).join('');
+
+                grid.querySelectorAll('.calc-card').forEach(card => {
+                    card.addEventListener('click', () => this.openCalculator(card.dataset.calc));
+                });
+            }
+
+            static openCalculator(id) {
+                const calc = CALCULATORS.find(c => c.id === id);
+                const modal = document.getElementById('calcModal');
+                const modalTitle = document.getElementById('modalTitle');
+                const modalBody = document.getElementById('modalBody');
+                
+                modalTitle.textContent = calc.name;
+                
+                // Route to appropriate builder
+                const builders = {
+                    basic: UIBuilder.buildBasicCalculator,
+                    percentage: UIBuilder.buildPercentageCalculator,
+                    unit: UIBuilder.buildUnitConverter,
+                    scientific: UIBuilder.buildScientificCalculator,
+                    algebra: UIBuilder.buildAlgebraSolver,
+                    matrix: UIBuilder.buildMatrixCalculator,
+                    loan: UIBuilder.buildLoanCalculator,
+                    interest: UIBuilder.buildInterestCalculator,
+                    investment: UIBuilder.buildInvestmentCalculator,
+                    bmi: UIBuilder.buildBMICalculator,
+                    bmr: UIBuilder.buildBMRCalculator,
+                    age: UIBuilder.buildAgeCalculator,
+                    pregnancy: UIBuilder.buildPregnancyCalculator,
+                    datediff: UIBuilder.buildDateDiffCalculator,
+                    timeduration: UIBuilder.buildTimeDurationCalculator,
+                    countdown: UIBuilder.buildCountdownCalculator
+                };
+                
+                modalBody.innerHTML = builders[id]?.() || '<p>Calculator not implemented yet</p>';
+                modal.classList.add('active');
+                
+                // Special init for unit converter
+                if (id === 'unit') {
+                    setTimeout(() => UIBuilder.updateUnitOptions(), 100);
+                }
+                
+                // Special init for interest calculator
+                if (id === 'interest') {
+                    setTimeout(() => {
+                        document.getElementById('interestType').addEventListener('change', (e) => {
+                            document.getElementById('compoundFreqGroup').style.display = 
+                                e.target.value === 'compound' ? 'block' : 'none';
+                        });
+                    }, 100);
+                }
+            }
+
+            static setupEventListeners() {
+                // Theme toggle
+                document.getElementById('themeToggle').addEventListener('click', () => {
+                    AppState.theme = AppState.theme === 'light' ? 'dark' : 'light';
+                    localStorage.setItem('theme', AppState.theme);
+                    this.setupTheme();
+                });
+
+                // Category filters
+                document.querySelectorAll('.category-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        this.renderCalculators(e.target.dataset.category);
+                    });
+                });
+
+                // Modal close
+                document.getElementById('closeModal').addEventListener('click', () => {
+                    document.getElementById('calcModal').classList.remove('active');
+                });
+
+                // Close on backdrop click
+                document.getElementById('calcModal').addEventListener('click', (e) => {
+                    if (e.target.id === 'calcModal') {
+                        document.getElementById('calcModal').classList.remove('active');
+                    }
+                });
+
+                // Keyboard navigation
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        document.getElementById('calcModal').classList.remove('active');
+                    }
+                });
+            }
+        }
+
+        // ===== INITIALIZE APPLICATION =====
+        document.addEventListener('DOMContentLoaded', () => {
+            App.init();
+        });
+    </script>
 </body>
 </html>
